@@ -6,7 +6,7 @@ import { packageDirectorySync } from "pkg-dir";
 import rimraf from "rimraf";
 import { install } from "source-map-support";
 
-import { code, codeBlockLang, d, kb, link } from "../lib/index.js";
+import { code, codeBlockLang, d, kb, link, remark } from "../lib/index.js";
 import { defaultFilename, render, save } from "../lib/markdown/index.js";
 
 install();
@@ -22,6 +22,8 @@ const pkg = (
 const pkgRef = code(pkg);
 
 const readme = kb(`${pkg} - a documentation-as-code library for TypeScript`)`
+  ${remark()("This package is in early development phase!")}
+
   ${pkgRef} (for "Knowledge Base in TypeScript") presents a
   documentation-as-code solution where units of documentation
   ("knowledge base" or "KB") are composed programmatically
@@ -50,6 +52,11 @@ const firstKB = await (async () => {
 
   In order to generate a documentation, a set of KBs must be sent to a renderer.
   Here we use the markdown renderer.
+
+  ${remark()`
+    We use a top-level ${code("await")} as ${code(save.name)}
+    returns a promise. You'll need Node >= 14.8 for this.
+  `}
 
   Result:
   ${example.result("My_Documentation")}
@@ -105,20 +112,6 @@ const linkExample = await (async () => {
   `;
   });
 })();
-
-// const apiReference = series("API reference", [
-//   kb.kb,
-//   block.kb,
-//   d.kb,
-//   list.kb,
-//   inline.kb,
-// ]);
-
-// save(
-//   render([example], {
-//     paths: new Map([[example, "./docs"]]),
-//   })
-// );
 
 process.chdir(pwd);
 save(
