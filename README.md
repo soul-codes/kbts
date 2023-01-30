@@ -1,5 +1,7 @@
 # kbts - a documentation-as-code library for TypeScript
 
+> ℹ️ This package is in early development phase!
+
 `kbts` (for "Knowledge Base in TypeScript") presents a
 documentation-as-code solution where units of documentation
 ("knowledge base" or "KB") are composed programmatically
@@ -29,6 +31,9 @@ await save(render([readme]));
 
 In order to generate a documentation, a set of KBs must be sent to a renderer.
 Here we use the markdown renderer.
+
+> ℹ️ We use a top-level `await` as `save`
+> returns a promise. You'll need Node >= 14.8 for this.
 
 Result:
 
