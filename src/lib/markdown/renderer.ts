@@ -48,7 +48,7 @@ type EmitFunction = (context: EmitContext) => NestedArray<EmitResult>;
 export interface RenderOptions {
   defaultEmbedCondition: EmbedCondition;
   defaultEmitCondition: EmitCondition;
-  paths: ReadonlyMap<KB, string>;
+  paths: Iterable<readonly [KB, string]>;
 }
 
 interface RenderInstance extends RenderContext {
@@ -91,7 +91,8 @@ export function render(
 ): readonly OutputFile[] {
   const renderInstances = new Map<KB, RenderInstance>();
 
-  const getPath = (kb: KB) => options?.paths?.get(kb) ?? ".";
+  const paths = new Map(options?.paths || []);
+  const getPath = (kb: KB) => paths.get(kb) ?? ".";
 
   function ensureLinkedDocument(
     doc: KB,
