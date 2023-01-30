@@ -608,7 +608,7 @@ function isDefinitionContent(content: Content): content is DefinitionContent {
 
 function isBlockContent(content: Content): content is BlockContent {
   switch (content.type) {
-    case "blockquote":
+    case "paragraph":
     case "heading":
     case "thematicBreak":
     case "blockquote":
