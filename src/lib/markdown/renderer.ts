@@ -48,6 +48,7 @@ type EmitFunction = (context: EmitContext) => NestedArray<EmitResult>;
 export interface RenderOptions {
   defaultEmbedCondition: EmbedCondition;
   defaultEmitCondition: EmitCondition;
+  remarkPrefixes: Readonly<Record<string, string>>;
   paths: Iterable<readonly [KB, string]>;
 }
 
@@ -71,6 +72,7 @@ interface RenderContext {
     topLevel: boolean,
     embedKey: object | null
   ): ForeignDocument;
+  remarkThemes: ReadonlyMap<string, string>;
 }
 
 interface ForeignDocument {
@@ -85,11 +87,21 @@ interface EmitContext {
   isCodeText: boolean;
 }
 
+const defaultRemarkThemes = {
+  info: "ℹ️ ",
+  attention: "🔴 ATTENTION: ",
+  warning: "⚠️ Warning: ",
+};
+
 export function render(
   docs: readonly KB[],
   options?: Partial<RenderOptions>
 ): readonly OutputFile[] {
   const renderInstances = new Map<KB, RenderInstance>();
+  const remarkThemes: ReadonlyMap<string, string> = new Map([
+    ...Object.entries(defaultRemarkThemes),
+    ...Object.entries(options?.remarkPrefixes || {}),
+  ]);
 
   const paths = new Map(options?.paths || []);
   const getPath = (kb: KB) => paths.get(kb) ?? ".";
@@ -130,6 +142,7 @@ export function render(
           mutableFilename: filename,
           isFilenameExplicit: isFilenameExplicit,
         },
+        remarkThemes,
         emit: () => {
           throw Error("not assigned");
         },
@@ -429,6 +442,30 @@ function renderBlock(node: Block, context: RenderContext): EmitFunction {
           return {
             type: "blockquote",
             children: asBlockOrDefinitionContents(iterateEmits(children, true)),
+          };
+        }
+
+        case "remark": {
+          return {
+            type: "blockquote",
+            children: [
+              ...asBlockOrDefinitionContents(
+                iterateEmits(
+                  [
+                    {
+                      type: "text",
+                      value:
+                        (style.theme == null
+                          ? null
+                          : context.remarkThemes.get(style.theme)) ||
+                        defaultRemarkThemes.info,
+                    },
+                    children,
+                  ],
+                  true
+                )
+              ),
+            ],
           };
         }
 

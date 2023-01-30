@@ -4,7 +4,7 @@ export interface InlineStyle {
   class: "emphasis" | "strikethrough" | "code";
 }
 
-export type BlockStyle = BlockStyle_Code | BlockStyle_Quote;
+export type BlockStyle = BlockStyle_Code | BlockStyle_Quote | BlockStyle_Remark;
 
 export interface BlockStyle_Code {
   class: "code";
@@ -13,6 +13,11 @@ export interface BlockStyle_Code {
 
 export interface BlockStyle_Quote {
   class: "quote";
+}
+
+export interface BlockStyle_Remark {
+  class: "remark";
+  theme?: string | null;
 }
 
 export const em = kb("em").definition(
@@ -32,6 +37,10 @@ export const quote = kb("quote").definition(
 
 export const codeBlock = kb("codeBlock").definition(
   block<BlockStyle>({ class: "code" })
+);
+
+export const remark = kb("remark").definition((theme: string | null = null) =>
+  block<BlockStyle>({ class: "remark", theme })
 );
 
 export const codeBlockLang = (language: string) =>
@@ -63,6 +72,12 @@ export function decodeBlockStyle(style: unknown): BlockStyle | null {
     }
     case "code": {
       if (_style.language == null || typeof _style.language === "string") {
+        return _style as BlockStyle;
+      }
+      return null;
+    }
+    case "remark": {
+      if (_style.theme == null || typeof _style.theme === "string") {
         return _style as BlockStyle;
       }
       return null;
