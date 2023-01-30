@@ -28,6 +28,13 @@
       "types": "./lib/markdown/index.d.ts"
     }
   },
+  "typesVersions": {
+    "*": {
+      "markdown": [
+        "./lib/markdown/index.d.ts"
+      ]
+    }
+  },
   "type": "module",
   "devDependencies": {
     "@release-it/conventional-changelog": "2.0.0",
