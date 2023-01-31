@@ -1,6 +1,6 @@
 export interface Lazy {
   type: NodeType.Lazy;
-  content: () => Node;
+  content: () => Node | Promise<Node>;
 }
 
 export interface KB {
@@ -8,8 +8,7 @@ export interface KB {
   title: string;
   content: Node;
   embedCondition: EmbedCondition;
-  emitCondition: EmitCondition | null;
-  declaration: KBDeclarationCorrelation | null;
+  forceEmitCondition: ForceEmitCondition | null;
 }
 
 export interface Series {
@@ -17,11 +16,6 @@ export interface Series {
   index: Node;
   items: readonly KB[];
   sequential: boolean;
-}
-
-export interface KBDeclarationCorrelation {
-  source: SourceInfo | null;
-  offset: number;
 }
 
 export interface SourceInfo {
@@ -36,7 +30,7 @@ export type EmbedCondition =
   | EmbedCondition_ReferenceCount
   | null;
 
-export type EmitCondition = boolean;
+export type ForceEmitCondition = boolean;
 
 export interface EmbedCondition_ReferenceCount {
   type: "reference_count";

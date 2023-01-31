@@ -1,5 +1,5 @@
 import { writeFile } from "fs";
-import { dirname, join, resolve } from "path";
+import { dirname, join, relative, resolve, toNamespacedPath } from "path";
 import { promisify } from "util";
 
 import type {
@@ -31,7 +31,7 @@ import {
   decodeBlockStyle,
   decodeInlineStyle,
 } from "../index.js";
-import { EmitCondition } from "../types.js";
+import { ForceEmitCondition } from "../types.js";
 import { explicitFilenames } from "./metadata.js";
 
 type EmitResult = null | MarkdownNode | ParagraphFragment | ParagraphFragment;
@@ -47,9 +47,10 @@ type EmitFunction = (context: EmitContext) => NestedArray<EmitResult>;
 
 export interface RenderOptions {
   defaultEmbedCondition: EmbedCondition;
-  defaultEmitCondition: EmitCondition;
+  defaultEmitCondition: ForceEmitCondition;
   remarkPrefixes: Readonly<Record<string, string>>;
-  paths: Iterable<readonly [KB, string]>;
+  transformFilename?: (name: string) => string;
+  paths: Iterable<readonly [KB | null, string]>;
 }
 
 interface RenderInstance extends RenderContext {
@@ -71,7 +72,7 @@ interface RenderContext {
     target: KB,
     topLevel: boolean,
     embedKey: object | null
-  ): ForeignDocument;
+  ): Promise<ForeignDocument>;
   remarkThemes: ReadonlyMap<string, string>;
 }
 
@@ -93,35 +94,59 @@ const defaultRemarkThemes = {
   warning: "⚠️ Warning: ",
 };
 
-export function render(
+export function defaultTransformFilename(name: string) {
+  name = name.replace(/\.md$/i, "");
+  if (name.toLowerCase() === "readme") return "README";
+  return name
+    .replace(/[^\w]+/g, "_")
+    .replace(/(\p{Ll})(\p{Lu})/gu, "$1_$2")
+    .toLowerCase();
+}
+
+/**
+ * Renders the set of KBs as markdown documents.
+ *
+ * @param docs
+ * @param options
+ * @returns A set of markdown filename and texts that can be saved using `save`.
+ */
+export async function render(
   docs: readonly KB[],
   options?: Partial<RenderOptions>
-): readonly OutputFile[] {
+): Promise<readonly OutputFile[]> {
   const renderInstances = new Map<KB, RenderInstance>();
   const remarkThemes: ReadonlyMap<string, string> = new Map([
     ...Object.entries(defaultRemarkThemes),
     ...Object.entries(options?.remarkPrefixes || {}),
   ]);
 
+  const transformFilename =
+    options?.transformFilename ?? defaultTransformFilename;
   const paths = new Map(options?.paths || []);
-  const getPath = (kb: KB) => paths.get(kb) ?? ".";
+  const getPath = (kb: KB) => paths.get(kb) ?? paths.get(null) ?? ".";
 
-  function ensureLinkedDocument(
+  async function ensureLinkedDocument(
     doc: KB,
     topLevel: boolean,
-    embedKey: null | object
-  ): ForeignDocument {
+    embedKey: null | object,
+    from: KB | null
+  ): Promise<ForeignDocument> {
     let instance = renderInstances.get(doc);
     if (!instance) {
       const explicitFilename = explicitFilenames.get(doc);
       const [filename, isFilenameExplicit] =
         explicitFilename == null
           ? [safeFilename(doc), false]
-          : [explicitFilename.replace(/\.md$/i, ""), true];
+          : [transformFilename(explicitFilename), true];
 
       const foreignDocument: ForeignDocument = {
-        getUrl: () =>
-          join(getPath(doc), newInstance.state.mutableFilename + ".md"),
+        getUrl: () => {
+          const neutralPath = join(
+            getPath(doc),
+            newInstance.state.mutableFilename + ".md"
+          );
+          return from ? relative(getPath(from), neutralPath) : neutralPath;
+        },
         resolveEmbedding: (condition) =>
           resolveEmbedding(
             condition ??
@@ -135,7 +160,8 @@ export function render(
 
       const newInstance: RenderInstance = {
         kb: doc,
-        ensureLinkedDocument,
+        ensureLinkedDocument: (target, topLevel, key) =>
+          ensureLinkedDocument(target, topLevel, key, doc),
         state: {
           refCount: 0,
           embedRefs: new Set(),
@@ -150,7 +176,7 @@ export function render(
       };
 
       renderInstances.set(doc, newInstance);
-      newInstance.emit = renderDocument(doc, newInstance);
+      newInstance.emit = await renderDocument(doc, newInstance);
       instance = newInstance;
     }
     if (!topLevel) instance.state.refCount++;
@@ -167,13 +193,13 @@ export function render(
 
   function safeFilename(doc: KB): string {
     const title = doc.title;
-    const stem = title.replace(/[^\w]+/g, "_");
+    const stem = transformFilename(title);
     return stem;
   }
 
-  for (const doc of docs) {
-    ensureLinkedDocument(doc, true, null);
-  }
+  await Promise.all(
+    docs.map((doc) => ensureLinkedDocument(doc, true, null, null))
+  );
 
   const escapeName = createNameEscaper((index, stem) => stem + "_" + index);
   for (const context of renderInstances.values()) {
@@ -190,7 +216,7 @@ export function render(
   const output: OutputFile[] = [];
   for (const context of renderInstances.values()) {
     const emitCondition =
-      context.kb.emitCondition ?? options?.defaultEmitCondition ?? false;
+      context.kb.forceEmitCondition ?? options?.defaultEmitCondition ?? false;
 
     // Don't emit if the KB has been embedded and the emit condition is not
     // `true` (forced)
@@ -223,6 +249,11 @@ export function render(
   return output;
 }
 
+/**
+ * Save the result of `render` to the filesystem.
+ * @param result
+ * @param rootDir
+ */
 export async function save(
   result: readonly OutputFile[],
   rootDir: string = process.cwd()
@@ -252,8 +283,11 @@ export interface OutputFile {
   text: string;
 }
 
-function renderDocument(node: KB, context: RenderContext): EmitFunction {
-  const content = renderNode(node.content, context);
+async function renderDocument(
+  node: KB,
+  context: RenderContext
+): Promise<EmitFunction> {
+  const content = await renderNode(node.content, context);
   return map(
     content,
     (content, emitContext) =>
@@ -274,7 +308,10 @@ function renderDocument(node: KB, context: RenderContext): EmitFunction {
   );
 }
 
-function renderNode(node: Node, context: RenderContext): EmitFunction {
+async function renderNode(
+  node: Node,
+  context: RenderContext
+): Promise<EmitFunction> {
   if (typeof node === "string") {
     return renderText(node);
   } else if (typeof node === "number") {
@@ -284,7 +321,7 @@ function renderNode(node: Node, context: RenderContext): EmitFunction {
   } else {
     switch (node.type) {
       case NodeType.Lazy: {
-        return renderNode(node.content(), context);
+        return renderNode(await node.content(), context);
       }
 
       case NodeType.Fragment: {
@@ -339,18 +376,24 @@ function renderText(node: string): EmitFunction {
   };
 }
 
-function renderFragment(node: Fragment, context: RenderContext): EmitFunction {
+async function renderFragment(
+  node: Fragment,
+  context: RenderContext
+): Promise<EmitFunction> {
   return seq(
-    node.content.map((child) => renderNode(child, context)),
+    await Promise.all(node.content.map((child) => renderNode(child, context))),
     (items) => items
   );
 }
 
-function renderEmbed(node: Embed, context: RenderContext): EmitFunction {
+async function renderEmbed(
+  node: Embed,
+  context: RenderContext
+): Promise<EmitFunction> {
   const { resolveEmbedding, emitContent: contentIfEmbed } =
-    context.ensureLinkedDocument(node.target, false, {});
+    await context.ensureLinkedDocument(node.target, false, {});
 
-  const contentIfLink = renderNode(
+  const contentIfLink = await renderNode(
     node.contentIfLink((label) => ({
       type: NodeType.Link,
       target: node.target,
@@ -366,13 +409,16 @@ function renderEmbed(node: Embed, context: RenderContext): EmitFunction {
   };
 }
 
-function renderLink(node: Link, context: RenderContext): EmitFunction {
+async function renderLink(
+  node: Link,
+  context: RenderContext
+): Promise<EmitFunction> {
   const [labelFallback, url] =
     typeof node.target === "string"
       ? [node.target, node.target]
       : [
           node.target.title,
-          context.ensureLinkedDocument(node.target, false, null).getUrl,
+          (await context.ensureLinkedDocument(node.target, false, null)).getUrl,
         ];
 
   const label = node.label ?? labelFallback;
@@ -388,9 +434,14 @@ function renderLink(node: Link, context: RenderContext): EmitFunction {
   };
 }
 
-function renderList(node: List, renderContext: RenderContext): EmitFunction {
+async function renderList(
+  node: List,
+  renderContext: RenderContext
+): Promise<EmitFunction> {
   return seq(
-    node.items.map((item) => renderNode(item, renderContext)),
+    await Promise.all(
+      node.items.map((item) => renderNode(item, renderContext))
+    ),
     (items, emitContext): NestedArray<EmitResult> => {
       return emitContext.isBlock
         ? emitContext.isCodeText
@@ -422,12 +473,15 @@ function renderList(node: List, renderContext: RenderContext): EmitFunction {
   );
 }
 
-function renderBlock(node: Block, context: RenderContext): EmitFunction {
+async function renderBlock(
+  node: Block,
+  context: RenderContext
+): Promise<EmitFunction> {
   const style = decodeBlockStyle(node.style);
-  const content = renderNode(node.content, context);
+  const content = await renderNode(node.content, context);
   return map(
     content,
-    (children, emitContext) => {
+    (children) => {
       if (!style) return children;
       switch (style.class) {
         case "code": {
@@ -480,12 +534,15 @@ function renderBlock(node: Block, context: RenderContext): EmitFunction {
   );
 }
 
-function renderInline(node: Inline, context: RenderContext): EmitFunction {
+async function renderInline(
+  node: Inline,
+  context: RenderContext
+): Promise<EmitFunction> {
   const style = decodeInlineStyle(node.style);
   const content = renderNode(node.content, context);
   if (!style) return content;
   return map(
-    content,
+    await content,
     (text) => {
       switch (style.class) {
         case "emphasis": {
@@ -536,14 +593,27 @@ function* _iterateEmits(
     if (state.lastPF) {
       state.lastPF.push(...emits.children);
     } else {
-      state.lastPF = [...emits.children];
-      yield { type: "paragraph", children: state.lastPF };
+      if (emits.children.length >= 0) {
+        state.lastPF = [...emits.children];
+        if (state.lastPF[0].type === "text") {
+          state.lastPF[0].value = state.lastPF[0].value.trimLeft();
+        }
+        yield { type: "paragraph", children: state.lastPF };
+      }
     }
   } else if (emits) {
     if (emits.type === "paragraph") {
       state.lastPF = emits.children;
     } else if (isBlockContent(emits)) {
-      state.lastPF = null;
+      if (state.lastPF) {
+        if (state.lastPF.length > 0) {
+          const lastNode = state.lastPF[state.lastPF.length - 1];
+          if (lastNode.type === "text") {
+            lastNode.value = lastNode.value.trimRight();
+          }
+        }
+        state.lastPF = null;
+      }
     }
 
     if (block && isPhrasingContent(emits)) {

@@ -13,7 +13,6 @@
     "noImplicitAny": true,
     "rootDir": "src",
     "outDir": "target",
-    "baseUrl": ".",
     "plugins": [
       {
         "name": "ts-transform-paths",
@@ -25,11 +24,7 @@
       }
     ],
     "sourceMap": true,
-    "types": ["node", "jest"],
-    "paths": {
-      "kbts": ["./src/lib/index"],
-      "kbts/markdown": ["./src/lib/markdown/index"]
-    }
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/__scraps"]

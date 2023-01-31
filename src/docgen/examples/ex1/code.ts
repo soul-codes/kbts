@@ -5,4 +5,4 @@ export const readme = kb("My Documentation")`
   A nugget of wisdom goes here.
 `;
 
-await save(render([readme]));
+await save(await render([readme]));

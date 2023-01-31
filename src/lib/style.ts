@@ -20,32 +20,51 @@ export interface BlockStyle_Remark {
   theme?: string | null;
 }
 
-export const em = kb("em").definition(
-  inline<InlineStyle>({ class: "emphasis" })
-);
+/**
+ * Creates an inline node that styles its content as emphasized, semantically
+ * similar to bold or italic type for emphasis.
+ */
+export const em = inline<InlineStyle>({ class: "emphasis" });
 
-export const s = kb("s").definition(
-  inline<InlineStyle>({ class: "strikethrough" })
-);
-export const code = kb("code").definition(
-  inline<InlineStyle>({ class: "code" })
-);
+/**
+ * Creates an inline node that styles its content as deleted with
+ * (from "strikethrough").
+ */
+export const s = inline<InlineStyle>({ class: "strikethrough" });
 
-export const quote = kb("quote").definition(
-  block<BlockStyle>({ class: "quote" })
-);
+/**
+ * Creates an inline node that styles its content as code.
+ */
+export const code = inline<InlineStyle>({ class: "code" });
 
-export const codeBlock = kb("codeBlock").definition(
-  block<BlockStyle>({ class: "code" })
-);
+/**
+ * Creates an block that styles its content as quoted content.
+ */
+export const quote = block<BlockStyle>({ class: "quote" });
 
-export const remark = kb("remark").definition((theme: string | null = null) =>
-  block<BlockStyle>({ class: "remark", theme })
-);
+/**
+ * Creates an block that styles its content as a code block without specifying
+ * a language.
+ */
+export const codeBlock = block<BlockStyle>({ class: "code" });
 
+/**
+ * Creates an block that styles its content as a remark block.
+ */
+export const remark = (theme: string | null = null) =>
+  block<BlockStyle>({ class: "remark", theme });
+
+/**
+ * Creates an block that styles its content as a code block formatted in a
+ * specific language.
+ */
 export const codeBlockLang = (language: string) =>
   block<BlockStyle>({ class: "code", language });
 
+/**
+ * A type checker for an inline style. Returns the style if it is a valid
+ * core inline style type, otherwise `null`.
+ */
 export function decodeInlineStyle(style: unknown): InlineStyle | null {
   if (typeof style !== "object" || !style) return null;
   const _style = style as InlineStyle;
@@ -61,6 +80,10 @@ export function decodeInlineStyle(style: unknown): InlineStyle | null {
   }
 }
 
+/**
+ * A type checker for a block style. Returns the style if it is a valid
+ * core block style type, otherwise `null`.
+ */
 export function decodeBlockStyle(style: unknown): BlockStyle | null {
   if (typeof style !== "object" || !style) return null;
   const _style = style as Partial<BlockStyle>;
@@ -87,6 +110,6 @@ export function decodeBlockStyle(style: unknown): BlockStyle | null {
   }
 }
 
-function checkNever<T>(assert: never, result: T) {
+function checkNever<T>(_assert: never, result: T) {
   return result;
 }
