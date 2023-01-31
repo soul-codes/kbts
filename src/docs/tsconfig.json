@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "kbts": ["../lib/index"],
+      "kbts/markdown": ["../lib/markdown/index"]
+    },
+    "plugins": [
+      {
+        "name": "ts-transform-paths",
+        "transform": "@zerollup/ts-transform-paths"
+      },
+      {
+        "transform": "@soul-codes-dev/ts-transform-static-resolve-path/output/index.js",
+        "after": true
+      },
+      {
+        "transform": "../../target/ts-plugin/index.cjs",
+        "libPath": ["./src/lib/index.ts", "./target/lib/index.d.ts"]
+      }
+    ]
+  },
+  "references": [{ "path": "../lib" }],
+  "include": ["."]
+}

@@ -1,6 +1,6 @@
 export interface Lazy {
   type: NodeType.Lazy;
-  content: () => Node;
+  content: () => Node | Promise<Node>;
 }
 
 export interface KB {

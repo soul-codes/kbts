@@ -8,7 +8,7 @@ export function createFactory<T>(
   } as TemplateFunction<T>);
 }
 
-export function lazy(factory: () => Node): Lazy {
+export function lazy(factory: () => Node | Promise<Node>): Lazy {
   return {
     type: NodeType.Lazy,
     content: factory,
@@ -52,7 +52,7 @@ function createFragment(
 export type TemplateInterpolable =
   | Node
   | KB
-  | (() => TemplateInterpolable)
+  | (() => TemplateInterpolable | Promise<TemplateInterpolable>)
   | readonly TemplateInterpolable[];
 
 export type TemplateFunction<T> = {
@@ -86,7 +86,12 @@ function pushInterpoable(
   } else if (typeof interpolable === "function") {
     pushInterpoable(
       content,
-      lazy(() => fragment(interpolable()))
+      lazy(() => {
+        const result = interpolable();
+        return result instanceof Promise
+          ? result.then(fragment)
+          : fragment(result);
+      })
     );
   } else if (
     typeof interpolable === "object" &&

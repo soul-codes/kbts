@@ -5,7 +5,7 @@
     "url": "https://github.com/soul-codes/kbts"
   },
   "scripts": {
-    "ts": "ttsc -w -p tsconfig.json",
+    "ts": "ttsc -b -w ./src/@build/tsconfig.json",
     "prepare": "rimraf lib && ttsc -p tsconfig.json && ttsc -p tsconfig.lib.json && pnpm docgen",
     "test": "node --experimental-vm-modules --experimental-specifier-resolution=node node_modules/jest/bin/jest.js",
     "docgen": "node target/docs",
@@ -26,6 +26,9 @@
     "./markdown": {
       "import": "./lib/markdown/index.js",
       "types": "./lib/markdown/index.d.ts"
+    },
+    "./api-transform": {
+      "default": "./ts-plugin/index.cjs"
     }
   },
   "typesVersions": {
@@ -55,6 +58,7 @@
     "rimraf": "^3.0.2",
     "source-map-loader": "^1.1.3",
     "source-map-support": "^0.5.21",
+    "ts-morph": "^17.0.1",
     "tslint": "^6.1.3",
     "tslint-etc": "^1.13.10",
     "ttypescript": "1.5.13",

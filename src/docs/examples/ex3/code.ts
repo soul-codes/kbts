@@ -9,4 +9,4 @@ export const pageB: KB = kb("Page B")`
   See also ${link(pageA)}.
 `;
 
-await save(render([pageA]));
+await save(await render([pageA]));

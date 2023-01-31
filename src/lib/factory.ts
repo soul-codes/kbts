@@ -34,13 +34,12 @@ export function series(
   };
 }
 
-export function kb(
-  title: string,
-  settings?: Partial<{
-    embedCondition: EmbedCondition;
-    emitCondition: EmitCondition;
-  }>
-): KBAnchor {
+export interface KbSettings {
+  embedCondition: EmbedCondition;
+  emitCondition: EmitCondition;
+}
+
+export function kb(title: string, settings?: Partial<KbSettings>): KBAnchor {
   let declaration: KBDeclarationCorrelation | null = null;
   const anchor: KBAnchor = Object.assign(
     createFactory<KBInstance>((content) => {
@@ -152,10 +151,20 @@ export function link(target: LinkTarget, label: string | null = null): Link {
   };
 }
 
-export function list(items: readonly Node[]): List {
+export function list(...items: readonly (Node | KB)[]): List {
   return {
     type: NodeType.List,
-    items,
+    items: items.map(
+      (item): Node =>
+        typeof item === "object" && item?.type === NodeType.KB
+          ? {
+              type: NodeType.Embed,
+              target: item,
+              condition: null,
+              contentIfLink: (link) => link(),
+            }
+          : item
+    ),
   };
 }
 

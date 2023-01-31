@@ -1,2 +1,2 @@
 export * from "./renderer.js";
-export { defaultFilename } from "./metadata.js";
+export { preferredFilename } from "./metadata.js";

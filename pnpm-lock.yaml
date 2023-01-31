@@ -22,6 +22,7 @@ specifiers:
   rimraf: ^3.0.2
   source-map-loader: ^1.1.3
   source-map-support: ^0.5.21
+  ts-morph: ^17.0.1
   tslint: ^6.1.3
   tslint-etc: ^1.13.10
   ttypescript: 1.5.13
@@ -51,6 +52,7 @@ devDependencies:
   rimraf: 3.0.2
   source-map-loader: 1.1.3
   source-map-support: 0.5.21
+  ts-morph: 17.0.1
   tslint: 6.1.3_typescript@4.6.3
   tslint-etc: 1.13.10_sjgou7evr5xupnkbbfre5kcvpm
   ttypescript: 1.5.13_typescript@4.6.3
@@ -882,6 +884,15 @@ packages:
       defer-to-connect: 2.0.1
     dev: true
 
+  /@ts-morph/common/0.18.1:
+    resolution: {integrity: sha512-RVE+zSRICWRsfrkAw5qCAK+4ZH9kwEFv5h0+/YeHTLieWP7F4wWq4JsKFuNWG+fYh/KF+8rAtgdj5zb2mm+DVA==}
+    dependencies:
+      fast-glob: 3.2.12
+      minimatch: 5.1.6
+      mkdirp: 1.0.4
+      path-browserify: 1.0.1
+    dev: true
+
   /@types/babel__core/7.20.0:
     resolution: {integrity: sha512-+n8dL/9GWblDO0iU6eZAwEIJVr5DWigtle+Q6HLOrh/pdbXOhOtqzq8VPPE2zvNJzSKY4vH/z3iT3tn0A3ypiQ==}
     dependencies:
@@ -1290,6 +1301,12 @@ packages:
       concat-map: 0.0.1
     dev: true
 
+  /brace-expansion/2.0.1:
+    resolution: {integrity: sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==}
+    dependencies:
+      balanced-match: 1.0.2
+    dev: true
+
   /braces/3.0.2:
     resolution: {integrity: sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A==}
     engines: {node: '>=8'}
@@ -1525,6 +1542,10 @@ packages:
   /co/4.6.0:
     resolution: {integrity: sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==}
     engines: {iojs: '>= 1.0.0', node: '>= 0.12.0'}
+    dev: true
+
+  /code-block-writer/11.0.3:
+    resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
     dev: true
 
   /collect-v8-coverage/1.0.1:
@@ -3583,6 +3604,13 @@ packages:
       brace-expansion: 1.1.11
     dev: true
 
+  /minimatch/5.1.6:
+    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
+    engines: {node: '>=10'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: true
+
   /minimist-options/4.1.0:
     resolution: {integrity: sha512-Q4r8ghd80yhO/0j1O3B2BjweX3fiHg9cdOwjJd2J76Q135c+NDxGCqdYKQ1SKBuFfgWbAUzBfvYjPUEeNgqN1A==}
     engines: {node: '>= 6'}
@@ -3601,6 +3629,12 @@ packages:
     hasBin: true
     dependencies:
       minimist: 1.2.7
+    dev: true
+
+  /mkdirp/1.0.4:
+    resolution: {integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==}
+    engines: {node: '>=10'}
+    hasBin: true
     dev: true
 
   /mkdirp/2.1.3:
@@ -3872,6 +3906,10 @@ packages:
       normalize-url: 6.1.0
       parse-path: 4.0.4
       protocols: 1.4.8
+    dev: true
+
+  /path-browserify/1.0.1:
+    resolution: {integrity: sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==}
     dev: true
 
   /path-exists/3.0.0:
@@ -4685,6 +4723,13 @@ packages:
   /trim-newlines/3.0.1:
     resolution: {integrity: sha512-c1PTsA3tYrIsLGkJkzHF+w9F2EyxfXGo4UyJc4pFL++FMjnq0HJS69T3M7d//gKrFKwy429bouPescbjecU+Zw==}
     engines: {node: '>=8'}
+    dev: true
+
+  /ts-morph/17.0.1:
+    resolution: {integrity: sha512-10PkHyXmrtsTvZSL+cqtJLTgFXkU43Gd0JCc0Rw6GchWbqKe0Rwgt1v3ouobTZwQzF1mGhDeAlWYBMGRV7y+3g==}
+    dependencies:
+      '@ts-morph/common': 0.18.1
+      code-block-writer: 11.0.3
     dev: true
 
   /tslib/1.14.1:

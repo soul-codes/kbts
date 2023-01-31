@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {},
+  "references": [
+    { "path": "../ts-plugin" },
+    { "path": "../docs" },
+    { "path": "../lib" }
+  ],
+  "include": ["."]
+}
