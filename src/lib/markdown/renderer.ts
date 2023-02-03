@@ -212,7 +212,7 @@ export function render(
 
     const text = toMarkdown(ast);
     output.push({
-      filename: resolve(
+      filename: join(
         getPath(context.kb),
         context.state.mutableFilename + ".md"
       ),
