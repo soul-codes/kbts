@@ -1,3 +1,10 @@
+## [0.2.1](https://github.com/soul-codes/kbts/compare/0.2.0...0.2.1) (2023-02-03)
+
+
+### Bug Fixes
+
+* 🐛 markdown render: emit relative paths ([6119bd3](https://github.com/soul-codes/kbts/commit/6119bd397bc2d2e6df1e23bc3d26000b1653fab3))
+
 # [0.2.0](https://github.com/soul-codes/kbts/compare/0.1.1...0.2.0) (2023-01-30)
 
 
