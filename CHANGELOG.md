@@ -1,3 +1,15 @@
+# [0.3.0](https://github.com/soul-codes/kbts/compare/0.2.1...0.3.0) (2023-02-04)
+
+
+### Features
+
+* 🎸 rewrite and add experimental api kb/ts plugin feature ([5895542](https://github.com/soul-codes/kbts/commit/5895542c6cb833085eccbbdb09806f92cb8a5c25))
+
+
+### BREAKING CHANGES
+
+* 🧨 markdown renderer's defaultFilename is renamed to preferredFilename. Rendering is now asynchronous, owing to interpolations being asynchronous.
+
 ## [0.2.1](https://github.com/soul-codes/kbts/compare/0.2.0...0.2.1) (2023-02-03)
 
 
