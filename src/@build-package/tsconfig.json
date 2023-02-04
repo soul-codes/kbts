@@ -1,7 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": { "outDir": "../../lib", "rootDir": "../lib" },
-  "references": [{ "path": "../lib/ts-plugin" }, { "path": "../lib" }],
-  "include": ["../lib"],
-  "exclude": ["../**/__test__"]
-}

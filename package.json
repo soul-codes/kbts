@@ -7,7 +7,7 @@
   "scripts": {
     "ts": "ttsc -b -w ./src/@build/tsconfig.json",
     "prepare": "rimraf ./target && ttsc -b ./src/lib/ts-plugin/tsconfig.json && ttsc -b ./src/@build/tsconfig.json && pnpm docgen",
-    "build:package": "rm -rf lib && ttsc -b ./src/@build-package/tsconfig.json",
+    "build:package": "rm -rf lib && ttsc -p ./tsconfig.package.lib.json && ttsc -p ./tsconfig.package.ts-plugin.json",
     "test": "node --experimental-vm-modules --experimental-specifier-resolution=node node_modules/jest/bin/jest.js",
     "docgen": "node target/docgen/index.js",
     "release": "release-it",
