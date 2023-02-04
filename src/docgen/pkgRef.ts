@@ -13,4 +13,4 @@ export const pkgVersion = packageJson.version;
 
 export const pkgRef = code(pkg);
 
-export const tsPluginRef = code(`${pkg}/ts-plugin`);
+export const tsPluginRef = code(`${pkg}/api-transform`);
