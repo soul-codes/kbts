@@ -1,14 +1,14 @@
 import { writeFile } from "fs";
-import { dirname, join, relative, resolve, toNamespacedPath } from "path";
+import { dirname, join, relative, resolve } from "path";
 import { promisify } from "util";
 
 import type {
   BlockContent,
   Content,
+  Content as MarkdownNode,
   DefinitionContent,
   Heading,
   ListItem,
-  Content as MarkdownNode,
   Paragraph,
   PhrasingContent,
   Root,
@@ -19,6 +19,8 @@ import { mkdirp } from "mkdirp";
 
 import {
   Block,
+  decodeBlockStyle,
+  decodeInlineStyle,
   Embed,
   EmbedCondition,
   Fragment,
@@ -28,8 +30,6 @@ import {
   List,
   Node,
   NodeType,
-  decodeBlockStyle,
-  decodeInlineStyle,
 } from "../index.js";
 import { ForceEmitCondition } from "../types.js";
 import { explicitFilenames } from "./metadata.js";
@@ -63,14 +63,17 @@ interface RenderInstance extends RenderContext {
 interface DocumentState {
   mutableFilename: string;
   isFilenameExplicit: boolean;
-  refs: Set<object>;
-  linkRefs: Set<object>;
-  embedRefs: Set<object>;
+  refs: Set<string>;
+  linkRefs: Set<string>;
+  embedRefs: Set<string>;
   isRoot: boolean;
 }
 
 interface RenderContext {
-  ensureLinkedDocument(target: KB): Promise<ForeignDocument>;
+  ensureLinkedDocument(
+    target: KB,
+    coordinate: readonly number[]
+  ): Promise<ForeignDocument>;
   remarkThemes: ReadonlyMap<string, string>;
 }
 
@@ -125,7 +128,7 @@ export async function render(
 
   async function ensureLinkedDocument(
     doc: KB,
-    from: KB | null
+    from: { kb: KB; coordinate: readonly number[] } | null
   ): Promise<ForeignDocument> {
     let instance = renderInstances.get(doc);
     if (!instance) {
@@ -141,7 +144,7 @@ export async function render(
             getPath(doc),
             newInstance.state.mutableFilename + ".md"
           );
-          return from ? relative(getPath(from), neutralPath) : neutralPath;
+          return from ? relative(getPath(from.kb), neutralPath) : neutralPath;
         },
         resolveEmbedding: (condition) =>
           resolveEmbedding(
@@ -156,7 +159,8 @@ export async function render(
 
       const newInstance: RenderInstance = {
         kb: doc,
-        ensureLinkedDocument: (target) => ensureLinkedDocument(target, doc),
+        ensureLinkedDocument: (target, fromCoordinate) =>
+          ensureLinkedDocument(target, { kb: doc, coordinate: fromCoordinate }),
         state: {
           isRoot: from == null,
           refs: new Set(),
@@ -176,17 +180,24 @@ export async function render(
       newInstance.emit = await renderDocument(doc, newInstance);
       instance = newInstance;
     }
-    from && doc !== from && instance.state.refs.add(from);
+
+    const refKey = from
+      ? [getWeakKey(getWeakKey), ...from.coordinate].join(":")
+      : null;
+
+    if (refKey != null && from && doc !== from.kb) {
+      instance.state.refs.add(refKey);
+    }
 
     const i = instance;
     return {
       ...i.interface,
       emitUrl: () => {
-        from && i.state.linkRefs.add(from);
+        refKey != null && i.state.linkRefs.add(refKey);
         return i.interface.emitUrl();
       },
       emitContent: (context) => {
-        from && i.state.embedRefs.add(from);
+        refKey != null && i.state.embedRefs.add(refKey);
         return i.interface.emitContent(context);
       },
     };
@@ -288,7 +299,7 @@ async function renderDocument(
   node: KB,
   context: RenderContext
 ): Promise<EmitFunction> {
-  const content = await renderNode(node.content, context);
+  const content = await renderNode(node.content, [], context);
   return map(
     content,
     (content, emitContext) =>
@@ -311,6 +322,7 @@ async function renderDocument(
 
 async function renderNode(
   node: Node,
+  coordinate: readonly number[],
   context: RenderContext
 ): Promise<EmitFunction> {
   if (typeof node === "string") {
@@ -322,31 +334,31 @@ async function renderNode(
   } else {
     switch (node.type) {
       case NodeType.Lazy: {
-        return renderNode(await node.content(), context);
+        return renderNode(await node.content(), coordinate, context);
       }
 
       case NodeType.Fragment: {
-        return renderFragment(node, context);
+        return renderFragment(node, coordinate, context);
       }
 
       case NodeType.Link: {
-        return renderLink(node, context);
+        return renderLink(node, coordinate, context);
       }
 
       case NodeType.Embed: {
-        return renderEmbed(node, context);
+        return renderEmbed(node, coordinate, context);
       }
 
       case NodeType.List: {
-        return renderList(node, context);
+        return renderList(node, coordinate, context);
       }
 
       case NodeType.Block: {
-        return renderBlock(node, context);
+        return renderBlock(node, coordinate, context);
       }
 
       case NodeType.Inline: {
-        return renderInline(node, context);
+        return renderInline(node, coordinate, context);
       }
 
       default:
@@ -379,20 +391,26 @@ function renderText(node: string): EmitFunction {
 
 async function renderFragment(
   node: Fragment,
+  coordinate: readonly number[],
   context: RenderContext
 ): Promise<EmitFunction> {
   return seq(
-    await Promise.all(node.content.map((child) => renderNode(child, context))),
+    await Promise.all(
+      node.content.map((child, index) =>
+        renderNode(child, [...coordinate, index], context)
+      )
+    ),
     (items) => items
   );
 }
 
 async function renderEmbed(
   node: Embed,
+  coordinate: readonly number[],
   context: RenderContext
 ): Promise<EmitFunction> {
   const { resolveEmbedding, emitContent: contentIfEmbed } =
-    await context.ensureLinkedDocument(node.target);
+    await context.ensureLinkedDocument(node.target, coordinate);
 
   const contentIfLink = await renderNode(
     node.contentIfLink((label) => ({
@@ -400,6 +418,7 @@ async function renderEmbed(
       target: node.target,
       label: label ?? null,
     })),
+    coordinate,
     context
   );
 
@@ -413,6 +432,7 @@ async function renderEmbed(
 
 async function renderLink(
   node: Link,
+  coordinate: readonly number[],
   context: RenderContext
 ): Promise<EmitFunction> {
   const [labelFallback, url] =
@@ -420,7 +440,7 @@ async function renderLink(
       ? [node.target, node.target]
       : [
           node.target.title,
-          (await context.ensureLinkedDocument(node.target)).emitUrl,
+          (await context.ensureLinkedDocument(node.target, coordinate)).emitUrl,
         ];
 
   const label = node.label ?? labelFallback;
@@ -438,11 +458,14 @@ async function renderLink(
 
 async function renderList(
   node: List,
+  coordinate: readonly number[],
   renderContext: RenderContext
 ): Promise<EmitFunction> {
   return seq(
     await Promise.all(
-      node.items.map((item) => renderNode(item, renderContext))
+      node.items.map((item, index) =>
+        renderNode(item, [...coordinate, index], renderContext)
+      )
     ),
     (items, emitContext): NestedArray<EmitResult> => {
       return emitContext.isBlock
@@ -477,10 +500,11 @@ async function renderList(
 
 async function renderBlock(
   node: Block,
+  coordinate: readonly number[],
   context: RenderContext
 ): Promise<EmitFunction> {
   const style = decodeBlockStyle(node.style);
-  const content = await renderNode(node.content, context);
+  const content = await renderNode(node.content, coordinate, context);
   return map(
     content,
     (children) => {
@@ -538,10 +562,11 @@ async function renderBlock(
 
 async function renderInline(
   node: Inline,
+  coordinate: readonly number[],
   context: RenderContext
 ): Promise<EmitFunction> {
   const style = decodeInlineStyle(node.style);
-  const content = renderNode(node.content, context);
+  const content = renderNode(node.content, coordinate, context);
   if (!style) return content;
   return map(
     await content,
@@ -777,3 +802,19 @@ function getTextContent(content: NestedArray<EmitResult>, block: boolean) {
 function absurd(_: never): never {
   throw Error();
 }
+
+const getWeakKey = (() => {
+  function defaultKeyGenerator() {
+    return ++universalCounter;
+  }
+
+  let universalCounter = 0;
+
+  const keys = new WeakMap<object, number>();
+  const keyFn = defaultKeyGenerator;
+  return function weakKey(value: object) {
+    const key = keys.get(value) || keyFn();
+    keys.set(value, key);
+    return key;
+  };
+})();
