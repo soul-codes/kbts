@@ -1,0 +1,86 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`KB emitting condition: both embedded 1`] = `
+[
+  {
+    "filename": "main.md",
+    "text": "# Main
+
+## Sub
+
+sub
+
+## Sub
+
+sub
+",
+  },
+]
+`;
+
+exports[`KB emitting condition: both embedded, force emitted 1`] = `
+[
+  {
+    "filename": "main.md",
+    "text": "# Main
+
+## Sub
+
+sub
+
+## Sub
+
+sub
+",
+  },
+  {
+    "filename": "sub.md",
+    "text": "# Sub
+
+sub
+",
+  },
+]
+`;
+
+exports[`KB emitting condition: one link, one embedded 1`] = `
+[
+  {
+    "filename": "main.md",
+    "text": "# Main
+
+[Sub](sub.md "Sub")
+
+## Sub
+
+sub
+",
+  },
+  {
+    "filename": "sub.md",
+    "text": "# Sub
+
+sub
+",
+  },
+]
+`;
+
+exports[`KB emitting condition: two linked, none embedded 1`] = `
+[
+  {
+    "filename": "main.md",
+    "text": "# Main
+
+[Sub](sub.md "Sub") [Sub](sub.md "Sub")
+",
+  },
+  {
+    "filename": "sub.md",
+    "text": "# Sub
+
+sub
+",
+  },
+]
+`;

@@ -64,20 +64,18 @@ interface DocumentState {
   mutableFilename: string;
   isFilenameExplicit: boolean;
   refCount: number;
+  linkRefs: Set<object>;
   embedRefs: Set<object>;
+  isRoot: boolean;
 }
 
 interface RenderContext {
-  ensureLinkedDocument(
-    target: KB,
-    topLevel: boolean,
-    embedKey: object | null
-  ): Promise<ForeignDocument>;
+  ensureLinkedDocument(target: KB, topLevel: boolean): Promise<ForeignDocument>;
   remarkThemes: ReadonlyMap<string, string>;
 }
 
 interface ForeignDocument {
-  getUrl: () => string;
+  emitUrl: () => string;
   resolveEmbedding(condition: EmbedCondition): boolean;
   emitContent: (context: EmitContext) => NestedArray<EmitResult>;
 }
@@ -128,7 +126,6 @@ export async function render(
   async function ensureLinkedDocument(
     doc: KB,
     topLevel: boolean,
-    embedKey: null | object,
     from: KB | null
   ): Promise<ForeignDocument> {
     let instance = renderInstances.get(doc);
@@ -140,7 +137,7 @@ export async function render(
           : [transformFilename(explicitFilename), true];
 
       const foreignDocument: ForeignDocument = {
-        getUrl: () => {
+        emitUrl: () => {
           const neutralPath = join(
             getPath(doc),
             newInstance.state.mutableFilename + ".md"
@@ -160,10 +157,12 @@ export async function render(
 
       const newInstance: RenderInstance = {
         kb: doc,
-        ensureLinkedDocument: (target, topLevel, key) =>
-          ensureLinkedDocument(target, topLevel, key, doc),
+        ensureLinkedDocument: (target, topLevel) =>
+          ensureLinkedDocument(target, topLevel, doc),
         state: {
+          isRoot: from == null,
           refCount: 0,
+          linkRefs: new Set(),
           embedRefs: new Set(),
           mutableFilename: filename,
           isFilenameExplicit: isFilenameExplicit,
@@ -184,8 +183,12 @@ export async function render(
     const i = instance;
     return {
       ...i.interface,
+      emitUrl: () => {
+        from && i.state.linkRefs.add(from);
+        return i.interface.emitUrl();
+      },
       emitContent: (context) => {
-        embedKey && i.state.embedRefs.add(embedKey);
+        from && i.state.embedRefs.add(from);
         return i.interface.emitContent(context);
       },
     };
@@ -197,9 +200,7 @@ export async function render(
     return stem;
   }
 
-  await Promise.all(
-    docs.map((doc) => ensureLinkedDocument(doc, true, null, null))
-  );
+  await Promise.all(docs.map((doc) => ensureLinkedDocument(doc, true, null)));
 
   const escapeName = createNameEscaper((index, stem) => stem + "_" + index);
   for (const context of renderInstances.values()) {
@@ -218,11 +219,13 @@ export async function render(
     const emitCondition =
       context.kb.forceEmitCondition ?? options?.defaultEmitCondition ?? false;
 
-    // Don't emit if the KB has been embedded and the emit condition is not
-    // `true` (forced)
-    if (!emitCondition && context.state.embedRefs.size > 0) {
-      continue;
-    }
+    // Emit the KB if emitting is forced, or if the KB is ever linked from,
+    // or if the KB is one of the original set requested to be rendered.
+    const shouldEmit =
+      emitCondition === true ||
+      context.state.linkRefs.size > 0 ||
+      context.state.isRoot;
+    if (!shouldEmit) continue;
 
     const ast: Root = {
       type: "root",
@@ -391,7 +394,7 @@ async function renderEmbed(
   context: RenderContext
 ): Promise<EmitFunction> {
   const { resolveEmbedding, emitContent: contentIfEmbed } =
-    await context.ensureLinkedDocument(node.target, false, {});
+    await context.ensureLinkedDocument(node.target, false);
 
   const contentIfLink = await renderNode(
     node.contentIfLink((label) => ({
@@ -418,7 +421,7 @@ async function renderLink(
       ? [node.target, node.target]
       : [
           node.target.title,
-          (await context.ensureLinkedDocument(node.target, false, null)).getUrl,
+          (await context.ensureLinkedDocument(node.target, false)).emitUrl,
         ];
 
   const label = node.label ?? labelFallback;
