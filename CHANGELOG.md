@@ -1,3 +1,18 @@
+## [0.4.1](https://github.com/soul-codes/kbts/compare/0.3.1...0.4.1) (2023-02-05)
+
+
+### Bug Fixes
+
+* 🐛 fix duplicated ref counting owing to lazies ([cabb091](https://github.com/soul-codes/kbts/commit/cabb09169bfc3f2ce19b85c970da333834161765))
+* 🐛 incorrect embed condition for KB in template strings ([1192ad5](https://github.com/soul-codes/kbts/commit/1192ad5f93360d7241eafd8027a3e8ec84e8be88))
+* 🐛 incorrect embed conditioning by ref count ([3d71d3b](https://github.com/soul-codes/kbts/commit/3d71d3b3a2346e85b061bd52578eeb059d9227fc))
+* 🐛 incorrect emit condition resolution ([31c75b2](https://github.com/soul-codes/kbts/commit/31c75b295779fbc43a7eaed25060dee0b75fbe4a))
+
+
+### Features
+
+* 🎸 isKB() utility ([e81a61f](https://github.com/soul-codes/kbts/commit/e81a61fad2b5126550f815818687d53d39b7f193))
+
 ## [0.3.1](https://github.com/soul-codes/kbts/compare/0.3.0...0.3.1) (2023-02-04)
 
 # [0.3.0](https://github.com/soul-codes/kbts/compare/0.2.1...0.3.0) (2023-02-04)
