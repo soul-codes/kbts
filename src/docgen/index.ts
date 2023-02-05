@@ -87,24 +87,21 @@ const apiapi = api(
 
 const apiList = [
   d`Core API ${list(
-    api(kb).forceEmbed(),
-    api(em).forceEmbed(),
-    api(s).forceEmbed(),
-    api(d).forceEmbed(),
-    api(code).forceEmbed(),
-    api(codeBlock).forceEmbed(),
-    api(codeBlockLang).forceEmbed(),
-    api(quote).forceEmbed(),
-    api(remark).forceEmbed(),
-    api(inline).forceEmbed(),
-    api(block).forceEmbed(),
-    apiapi.forceEmbed()
+    api(kb),
+    api(em),
+    api(s),
+    api(d),
+    api(code),
+    api(codeBlock),
+    api(codeBlockLang),
+    api(quote),
+    api(remark),
+    api(inline),
+    api(block),
+    apiapi
   )}
   `,
-  d`Markdown APIs ${list(
-    api(render).forceEmbed(),
-    api(preferredFilename).forceEmbed()
-  )}`,
+  d`Markdown APIs ${list(api(render), api(preferredFilename))}`,
 ];
 
 const apiReference = kb("API reference")`
@@ -131,5 +128,6 @@ save(
       [readme, "."],
       [null, "./docs"],
     ],
+    defaultEmbedCondition: { type: "reference_count", maxReferenceCount: 1 },
   })
 );
