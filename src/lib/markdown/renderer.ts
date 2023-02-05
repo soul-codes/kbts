@@ -63,14 +63,14 @@ interface RenderInstance extends RenderContext {
 interface DocumentState {
   mutableFilename: string;
   isFilenameExplicit: boolean;
-  refCount: number;
+  refs: Set<object>;
   linkRefs: Set<object>;
   embedRefs: Set<object>;
   isRoot: boolean;
 }
 
 interface RenderContext {
-  ensureLinkedDocument(target: KB, topLevel: boolean): Promise<ForeignDocument>;
+  ensureLinkedDocument(target: KB): Promise<ForeignDocument>;
   remarkThemes: ReadonlyMap<string, string>;
 }
 
@@ -125,7 +125,6 @@ export async function render(
 
   async function ensureLinkedDocument(
     doc: KB,
-    topLevel: boolean,
     from: KB | null
   ): Promise<ForeignDocument> {
     let instance = renderInstances.get(doc);
@@ -157,11 +156,10 @@ export async function render(
 
       const newInstance: RenderInstance = {
         kb: doc,
-        ensureLinkedDocument: (target, topLevel) =>
-          ensureLinkedDocument(target, topLevel, doc),
+        ensureLinkedDocument: (target) => ensureLinkedDocument(target, doc),
         state: {
           isRoot: from == null,
-          refCount: 0,
+          refs: new Set(),
           linkRefs: new Set(),
           embedRefs: new Set(),
           mutableFilename: filename,
@@ -178,7 +176,7 @@ export async function render(
       newInstance.emit = await renderDocument(doc, newInstance);
       instance = newInstance;
     }
-    if (!topLevel) instance.state.refCount++;
+    from && doc !== from && instance.state.refs.add(from);
 
     const i = instance;
     return {
@@ -200,7 +198,7 @@ export async function render(
     return stem;
   }
 
-  await Promise.all(docs.map((doc) => ensureLinkedDocument(doc, true, null)));
+  await Promise.all(docs.map((doc) => ensureLinkedDocument(doc, null)));
 
   const escapeName = createNameEscaper((index, stem) => stem + "_" + index);
   for (const context of renderInstances.values()) {
@@ -276,7 +274,7 @@ function resolveEmbedding(
     return false; // @todo
   }
   if (condition.type === "reference_count") {
-    return state.refCount <= condition.maxReferenceCount;
+    return state.refs.size <= condition.maxReferenceCount;
   }
   absurd(condition);
 }
@@ -394,7 +392,7 @@ async function renderEmbed(
   context: RenderContext
 ): Promise<EmitFunction> {
   const { resolveEmbedding, emitContent: contentIfEmbed } =
-    await context.ensureLinkedDocument(node.target, false);
+    await context.ensureLinkedDocument(node.target);
 
   const contentIfLink = await renderNode(
     node.contentIfLink((label) => ({
@@ -406,8 +404,9 @@ async function renderEmbed(
   );
 
   return (emitContext) => {
-    const shouldEmbed: boolean =
-      emitContext.isBlock && resolveEmbedding(node.condition);
+    node;
+    context;
+    const shouldEmbed: boolean = resolveEmbedding(node.condition);
     return (shouldEmbed ? contentIfEmbed : contentIfLink)(emitContext);
   };
 }
@@ -421,7 +420,7 @@ async function renderLink(
       ? [node.target, node.target]
       : [
           node.target.title,
-          (await context.ensureLinkedDocument(node.target, false)).emitUrl,
+          (await context.ensureLinkedDocument(node.target)).emitUrl,
         ];
 
   const label = node.label ?? labelFallback;
