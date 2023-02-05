@@ -13,6 +13,7 @@ import {
   NodeType,
   Series,
 } from "./types.js";
+import { isKb } from "./utils.js";
 
 export function series(
   title: string,
@@ -123,7 +124,7 @@ export function list(...items: readonly (Node | KB)[]): List {
     type: NodeType.List,
     items: items.map(
       (item): Node =>
-        typeof item === "object" && item?.type === NodeType.KB
+        isKb(item)
           ? {
               type: NodeType.Embed,
               target: item,
