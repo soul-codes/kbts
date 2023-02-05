@@ -20,3 +20,14 @@ test("KB emitting condition", async () => {
     await render([kb("Main")`${sub2.forceEmbed()} ${sub2.forceEmbed()}`])
   ).toMatchSnapshot("both embedded, force emitted");
 });
+
+test("default emitting condition", async () => {
+  const sub = kb("Sub")`sub`;
+  expect(
+    await render([kb("Main")`${sub}`], { defaultEmbedCondition: false })
+  ).toMatchSnapshot("never embed");
+
+  expect(
+    await render([kb("Main")`${sub}`], { defaultEmbedCondition: true })
+  ).toMatchSnapshot("always embed");
+});

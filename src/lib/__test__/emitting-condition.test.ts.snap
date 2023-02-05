@@ -84,3 +84,36 @@ sub
   },
 ]
 `;
+
+exports[`default emitting condition: always embed 1`] = `
+[
+  {
+    "filename": "main.md",
+    "text": "# Main
+
+## Sub
+
+sub
+",
+  },
+]
+`;
+
+exports[`default emitting condition: never embed 1`] = `
+[
+  {
+    "filename": "main.md",
+    "text": "# Main
+
+[Sub](sub.md "Sub")
+",
+  },
+  {
+    "filename": "sub.md",
+    "text": "# Sub
+
+sub
+",
+  },
+]
+`;

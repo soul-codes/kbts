@@ -107,7 +107,7 @@ function pushInterpoable(
     content.push({
       type: NodeType.Embed,
       target: interpolable,
-      condition: true,
+      condition: null,
       contentIfLink: (createLink) => createLink(),
     });
   } else {
