@@ -1,3 +1,10 @@
+## [0.4.2](https://github.com/soul-codes/kbts/compare/0.4.1...0.4.2) (2023-02-07)
+
+
+### Bug Fixes
+
+* 🐛 incorrect spacing in ad-hoc paragraph blocks ([7b52bee](https://github.com/soul-codes/kbts/commit/7b52bee0567317c97630610811d55e4786fa3576))
+
 ## [0.4.1](https://github.com/soul-codes/kbts/compare/0.3.1...0.4.1) (2023-02-05)
 
 
