@@ -40,6 +40,7 @@ type NestedArray<T> = T | readonly NestedArray<T>[];
 
 interface ParagraphFragment {
   type: "paragraph_fragment";
+  isTerminal: boolean;
   children: PhrasingContent[];
 }
 
@@ -375,13 +376,22 @@ function renderText(node: string): EmitFunction {
       } else {
         return node
           .split(/(?:(?:\r?\n\s*){2,})/)
-          .filter((text) => text)
           .map(
-            (text, index, texts): EmitResult => ({
-              type: index === 0 ? "paragraph_fragment" : "paragraph",
-              children: [{ type: "text", value: text }],
-            })
-          );
+            (text, index, texts): EmitResult =>
+              text
+                ? index === 0
+                  ? {
+                      type: "paragraph_fragment",
+                      isTerminal: index < texts.length - 1,
+                      children: [{ type: "text", value: text }],
+                    }
+                  : {
+                      type: "paragraph",
+                      children: [{ type: "text", value: text }],
+                    }
+                : (null as never)
+          )
+          .filter(Boolean);
       }
     } else {
       return { type: "text", value: node.replace(/\r?\n\s*/g, " ") };
@@ -610,7 +620,9 @@ function iterateEmits(emits: NestedArray<EmitResult>, block: boolean) {
 function* _iterateEmits(
   emits: NestedArray<EmitResult>,
   block: boolean,
-  state: { lastPF: PhrasingContent[] | null } = { lastPF: null }
+  state: { lastPF: PhrasingContent[] | null } = {
+    lastPF: null,
+  }
 ): Generator<Content> {
   if (Array.isArray(emits)) {
     for (const emit of emits) {
@@ -627,6 +639,9 @@ function* _iterateEmits(
         }
         yield { type: "paragraph", children: state.lastPF };
       }
+    }
+    if (emits.isTerminal) {
+      state.lastPF = null;
     }
   } else if (emits) {
     if (emits.type === "paragraph") {
