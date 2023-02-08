@@ -40,7 +40,8 @@ type NestedArray<T> = T | readonly NestedArray<T>[];
 
 interface ParagraphFragment {
   type: "paragraph_fragment";
-  isTerminal: boolean;
+  isClosedBefore: boolean;
+  isClosedAfter: boolean;
   children: PhrasingContent[];
 }
 
@@ -378,18 +379,26 @@ function renderText(node: string): EmitFunction {
           .split(/(?:(?:\r?\n\s*){2,})/)
           .map(
             (text, index, texts): EmitResult =>
-              text
-                ? index === 0
+              text.trim()
+                ? index === 0 || index === texts.length - 1
                   ? {
                       type: "paragraph_fragment",
-                      isTerminal: index < texts.length - 1,
+                      isClosedAfter: index < texts.length - 1,
+                      isClosedBefore: index > 0,
                       children: [{ type: "text", value: text }],
                     }
                   : {
                       type: "paragraph",
                       children: [{ type: "text", value: text }],
                     }
-                : (null as never)
+                : {
+                    type: "paragraph_fragment",
+                    isClosedAfter: index < texts.length - 1,
+                    isClosedBefore: index > 0,
+                    children: [
+                      { type: "text", value: text.includes("\n") ? "\n" : " " },
+                    ],
+                  }
           )
           .filter(Boolean);
       }
@@ -629,7 +638,7 @@ function* _iterateEmits(
       yield* _iterateEmits(emit, block, state);
     }
   } else if (emits?.type === "paragraph_fragment") {
-    if (state.lastPF) {
+    if (state.lastPF && !emits.isClosedBefore) {
       state.lastPF.push(...emits.children);
     } else {
       if (emits.children.length >= 0) {
@@ -640,7 +649,7 @@ function* _iterateEmits(
         yield { type: "paragraph", children: state.lastPF };
       }
     }
-    if (emits.isTerminal) {
+    if (emits.isClosedAfter) {
       state.lastPF = null;
     }
   } else if (emits) {

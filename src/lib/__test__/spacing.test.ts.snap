@@ -15,5 +15,14 @@ This paragraph ends with \`code\`.
 This paragraph has \`code\` in the middle.
 
 And this paragraph stands alone.
+
+\`This paragraph\`
+\`is made of two inline code fragments\`
+and some unquoted text.
+
+This is a list:
+
+*   \`list item\`
+    \`as code\`
 "
 `;
