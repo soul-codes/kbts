@@ -1,3 +1,10 @@
+## [0.4.3](https://github.com/soul-codes/kbts/compare/0.4.2...0.4.3) (2023-02-08)
+
+
+### Bug Fixes
+
+* 🐛 more fixes to spacing issues ([5dd0bcd](https://github.com/soul-codes/kbts/commit/5dd0bcdaff0ea626ff564a5603395cbdb63ad6b1))
+
 ## [0.4.2](https://github.com/soul-codes/kbts/compare/0.4.1...0.4.2) (2023-02-07)
 
 
