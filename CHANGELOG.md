@@ -1,3 +1,10 @@
+## [0.4.4](https://github.com/soul-codes/kbts/compare/0.4.3...0.4.4) (2023-03-27)
+
+
+### Bug Fixes
+
+* 🐛 release ts-plugin as a common JS plugin ([63aa222](https://github.com/soul-codes/kbts/commit/63aa2228e3574191d09f9da86c150ab79dc762fc))
+
 ## [0.4.3](https://github.com/soul-codes/kbts/compare/0.4.2...0.4.3) (2023-02-08)
 
 
