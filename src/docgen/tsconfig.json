@@ -17,8 +17,7 @@
         "after": true
       },
       {
-        "transform": "../../target/lib/ts-plugin/index.cjs",
-        "libPath": ["./src/lib/index.ts", "./target/lib/index.d.ts"]
+        "transform": "../../target/lib/ts-plugin/index.cjs"
       }
     ]
   },
