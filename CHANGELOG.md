@@ -1,3 +1,10 @@
+## [0.4.5](https://github.com/soul-codes/kbts/compare/0.4.4...0.4.5) (2023-03-29)
+
+
+### Bug Fixes
+
+* 🐛 allow api-transform to be used in CJS ([a072005](https://github.com/soul-codes/kbts/commit/a07200514da3e91a3424fddb5b180f3c8ae52d86))
+
 ## [0.4.4](https://github.com/soul-codes/kbts/compare/0.4.3...0.4.4) (2023-03-27)
 
 
