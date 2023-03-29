@@ -17,7 +17,8 @@
   "types": "lib/index.d.ts",
   "files": [
     "lib/**",
-    "src/lib/**"
+    "src/lib/**",
+    "api-transform.cjs"
   ],
   "exports": {
     ".": {

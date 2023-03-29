@@ -24,7 +24,11 @@ export default function (
   const libPath =
     pluginOptions?.libPath != null
       ? pluginOptions.libPath.map((path) => resolve(process.cwd(), path))
-      : [resolve(projectRoot, "lib", "index.js")];
+      : [
+          resolve(projectRoot, "src", "lib", "index.ts"),
+          resolve(projectRoot, "lib", "index.js"),
+          resolve(projectRoot, "lib", "index.d.ts"),
+        ];
 
   return (ctx: ts.TransformationContext) => {
     return (sourceFile: ts.SourceFile) => {
