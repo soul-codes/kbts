@@ -74,6 +74,17 @@ export function kb(
   });
 }
 
+/**
+ * Creates a KB-lifting function. The resulting function either makes the
+ * argument a KB if it isn't already, using the `title` and `settings`
+ * supplied, otherwise it simply returns the KB.
+ */
+export function asKb(title: string, settings?: Partial<KbSettings>) {
+  return (kbOrNode: KBInstance | Node): KBInstance => {
+    return isKb(kbOrNode) ? kbOrNode : kb(title, settings)(kbOrNode);
+  };
+}
+
 export interface KBInstance extends KB {
   /**
    * Creates a conditional `embed` node for the KB. The KB may be embedded into
