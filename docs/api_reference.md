@@ -1,6 +1,6 @@
 # API reference
 
-Version 0.4.7&#x20;
+Version 0.5.0&#x20;
 
 
 

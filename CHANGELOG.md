@@ -1,3 +1,10 @@
+# [0.5.0](https://github.com/soul-codes/kbts/compare/0.4.7...0.5.0) (2023-08-25)
+
+
+### Features
+
+* 🎸 asKb factory helper function ([94d9420](https://github.com/soul-codes/kbts/commit/94d94205d28980b243c38b1e099f7e570608ee63))
+
 ## [0.4.7](https://github.com/soul-codes/kbts/compare/0.4.4...0.4.7) (2023-03-29)
 
 
